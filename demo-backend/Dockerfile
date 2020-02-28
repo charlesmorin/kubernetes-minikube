@@ -1,5 +1,19 @@
+# Use the official maven/Java 8 image to create a build artifact.
+# https://hub.docker.com/_/maven
+FROM maven:3.6.3-jdk-8 as builder
+
+# Copy local code to the container image.
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+
+# Build a release artifact.
+RUN mvn package -DskipTests
+
 FROM openjdk:8-jdk-alpine
+
 VOLUME /tmp
-COPY target/demo-backend-1.0-SNAPSHOT.jar app.jar
-ENV JAVA_OPTS=""
-ENTRYPOINT exec java -jar /app.jar --debug
+COPY --from=builder /app/target/demo-backend-*.jar /demo-backend.jar
+
+# Run the app in the container.
+ENTRYPOINT exec java -jar /demo-backend.jar --debug
